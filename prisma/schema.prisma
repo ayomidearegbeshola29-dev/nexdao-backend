@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Proposal {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  proposer    String
+  status      ProposalStatus @default(active)
+  votesFor    BigInt   @default(0)
+  votesAgainst BigInt  @default(0)
+  quorum      BigInt
+  deadline    DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  votes       Vote[]
+}
+
+model Vote {
+  id         String   @id @default(cuid())
+  proposalId String
+  voter      String
+  support    Boolean
+  weight     BigInt
+  timestamp  DateTime @default(now())
+
+  proposal   Proposal @relation(fields: [proposalId], references: [id])
+
+  @@unique([proposalId, voter])
+  @@index([proposalId])
+}
+
+model Member {
+  id             String   @id @default(cuid())
+  address        String   @unique
+  votingPower    BigInt   @default(0)
+  proposalsCreated Int    @default(0)
+  votesCast      Int      @default(0)
+  joinedAt       DateTime @default(now())
+
+  @@index([address])
+}
+
+model TreasuryBalance {
+  id      String @id @default(cuid())
+  asset   String @unique
+  balance BigInt @default(0)
+  usdValue Float  @default(0)
+}
+
+enum ProposalStatus {
+  active
+  passed
+  rejected
+  executed
+}
